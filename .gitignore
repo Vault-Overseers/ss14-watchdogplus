@@ -1,0 +1,7 @@
+*.fasl
+.*.swp
+.*~
+README.html
+build/
+data/
+git/

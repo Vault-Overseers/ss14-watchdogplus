@@ -66,7 +66,7 @@
               (do-extract build latest)))
         ; symlink to latest build
         (with-cwd (build-path build)
-          (uiop:run-program (list "ln" "-sf" latest "latest")))))))
+          (uiop:run-program (list "ln" "-shf" (concatenate 'string latest "/") "latest")))))))
 
 (defun has-build (build rev)
   (probe-file (build-path build rev)))

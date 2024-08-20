@@ -1,6 +1,7 @@
 (defparameter *platform* "freebsd-x64")
 (defvar *builds* nil)
 (defvar *instances* nil)
+(defvar *running-instances* nil)
 
 (defun clear-builds ()
   (setf *builds* nil))
@@ -145,6 +146,9 @@
 (defun config-path (name)
   (pathname (format nil "config/~a.toml" name)))
 
+(defun log-path (name)
+  (pathname (format nil "log/~a.log" name)))
+
 (define-condition instance-not-found (error)
   ((text :initarg :text :reader text)))
 
@@ -168,8 +172,45 @@
   (loop for inst in *instances* do
         (prestart-instance (first inst))))
 
+(defun find-running (name)
+  (assoc name *running-instances* :test #'string-equal))
+
+(defun running (name)
+  (let ((inst (find-running name)))
+    (if (and inst (uiop:process-alive-p (cdr inst)))
+        T
+        (progn (setf *running-instances* (delete inst *running-instances*))
+               nil))))
+
+(defun cvardef (name val)
+  (format nil "~a=~a" name val))
+
+(defun start-instance (name)
+  (let* ((inst (cdr (find-instance name)))
+         (exe (concatenate 'string (namestring (build-path (getf inst :build))) "latest/Robust.Server")))
+    (print exe)
+    (unless (running name)
+      (ensure-directories-exist (log-path name))
+      (let ((procinfo (uiop:launch-program (list exe
+                                                 "--config-file" (namestring (config-path name))
+                                                 "--data-dir" (namestring (data-path (getf inst :data)))
+                                                 "--cvar" (cvardef "watchdog.key" name)
+                                                 "--cvar" (cvardef "watchdog.token" name))
+                                           :output (log-path name)
+                                           :error-output (log-path name))))
+        (push (cons name procinfo) *running-instances*)))))
+
 ;(read-config "config.lisp")
 
 ;(update-build "ds14")
 
 ;(prestart-all)
+
+;(start-instance "ds14-prod")
+
+;(kill-instance "ds14-prod")
+
+(defun kill-instance (name)
+  (let ((inst (find-running name)))
+    (uiop:terminate-process (cdr inst))
+    (setf *running-instances* (delete inst *running-instances*))))

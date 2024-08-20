@@ -9,20 +9,14 @@
 (defun clear-instances ()
   (setf *instances* nil) )
 
-(define-condition build-already-defined (error)
-  ((text :initarg :text :reader text)))
-
 (defun defbuild (name &rest body)
   (when (assoc name *builds* :test #'string-equal)
-    (error 'build-already-defined :text "The build ~a was already defined."))
+    (warn "Repeated definition of build ~a" name))
   (push (cons name body) *builds*))
-
-(define-condition instance-already-defined (error)
-  ((text :initarg :text :reader text)))
 
 (defun definstance (name &key build data port)
   (when (assoc name *instances* :test #'string-equal)
-    (error 'instance-already-defined :text "The instance ~a was already defined."))
+    (warn "Repeated definition of instance ~a" name))
   (find-build build)
   (unless port
     (error "Instance ~a needs to specify a :PORT" name))

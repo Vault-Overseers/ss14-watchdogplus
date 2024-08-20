@@ -45,8 +45,10 @@
 (defun release-path (build platform)
   (merge-pathnames (pathname (concatenate 'string build (format nil "/release/SS14.Server_~a.zip" platform))) #P"git/") )
 
-(defun build-path (build)
-  (merge-pathnames (pathname (concatenate 'string build "/")) #P"build/") )
+(defun build-path (build &optional rev)
+  (merge-pathnames (pathname (if rev
+                                 (concatenate 'string build "/" rev "/")
+                                 (concatenate 'string build "/"))) #P"build/") )
 
 (defun update-build (build)
   (destructuring-bind (name m url hash) (find-build build)
@@ -56,10 +58,18 @@
         (ensure-directories-exist (build-repo-path name))
       (when created
         (clone url hash repo-path))
-      (update hash repo-path)
-      (do-package repo-path *platform*)
-      (backup-build build)
-      (do-extract build))))
+      (let ((latest (update hash repo-path)))
+        (if (has-build build latest)
+            (format t "===> Revision ~a already built, skipping build~%" latest)
+            (progn
+              (do-package repo-path *platform*)
+              (do-extract build latest)))
+        ; symlink to latest build
+        (with-cwd (build-path build)
+          (uiop:run-program (list "ln" "-sf" latest "latest")))))))
+
+(defun has-build (build rev)
+  (probe-file (build-path build rev)))
 
 (defun nice (command)
   (cons "nice" command))
@@ -67,22 +77,28 @@
 (defmacro with-status-as (message &body body)
   `(progn
      (format t "===> ~a... " ,message)
-     ,@body
-     (format t "done~%")))
+     (let ((ret (progn ,@body)))
+       (format t "~a~%" (if ret ret "done"))
+       ret)))
 
 (defun clone (url hash dest)
   (declare (ignore hash))
   (with-status-as (format nil "Cloning ~a" dest)
     (uiop:run-program (nice (list "git" "clone" "--depth=1" url (namestring dest))))))
 
+(defmacro with-cwd (dir &body body)
+  "Like UIOP:WITH-CURRENT-DIRECTORY, but returns the value of evaluating BODY."
+  (let ((rval-name (gensym)))
+    `(let ((,rval-name))
+       (uiop:call-with-current-directory ,dir (setf ,rval-name (lambda () ,@body))))))
+
 (defun update (hash dest)
   (declare (ignore hash))
-  (with-status-as (format nil "Updating ~a" dest)
-    (uiop:call-with-current-directory
-      dest
-      (lambda ()
-        (uiop:run-program (nice (list "git" "pull")))
-        (uiop:run-program (nice (list "git" "submodule" "update" "--init" "--recursive")))))))
+  (with-status-as (format nil "Updating ~a from Git" dest)
+    (with-cwd dest
+      (uiop:run-program (nice (list "git" "pull")))
+      (uiop:run-program (nice (list "git" "submodule" "update" "--init" "--recursive")))
+      (uiop:run-program (list "git" "rev-parse" "HEAD") :output '(:string :stripped t)))))
 
 (defun do-package (dir platform)
   (with-status-as (format nil "Building ~a" dir)
@@ -91,11 +107,6 @@
       (lambda ()
         ; todo: old packaging method python Tools/package_server_build.py --hybrid-acz
         (uiop:run-program (nice (list "dotnet" "run" "--project" "Content.Packaging" "server" "--hybrid-acz" "--platform" platform)))))))
-
-(defun backup-build (build)
-  (with-status-as (format nil "Backing up ~a" build)
-    (let ((dest (ensure-directories-exist (build-path build))))
-      (backup dest))))
 
 (defun backup (path)
   (let* ((tpath (trim-trailing-slash (namestring path)))
@@ -123,9 +134,9 @@
 (defun without-last (l)
   (reverse (cdr (reverse l))))
 
-(defun do-extract (build)
+(defun do-extract (build rev)
   (with-status-as (format nil "Extracting ~a" build)
-    (let ((dest (ensure-directories-exist (build-path build))))
+    (let ((dest (ensure-directories-exist (build-path build rev))))
       (uiop:run-program (nice (list "unzip" "-d" (namestring dest) (namestring (release-path build *platform*))))))))
 
 (defun data-path (name)

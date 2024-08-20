@@ -1,3 +1,5 @@
+(ql:quickload "dexador")
+
 (defparameter *platform* "freebsd-x64")
 (defvar *builds* nil)
 (defvar *instances* nil)
@@ -207,6 +209,13 @@
 ;(start-instance "ds14-prod")
 
 ;(kill-instance "ds14-prod")
+
+(defun signal-update-instance (name)
+  (let* ((inst (find-instance name))
+         (port (getf (cdr inst) :port)))
+    (when port
+      (dex:post (format nil "http://localhost:~a/update" port)
+                :headers (list (cons "WatchdogToken" name))))))
 
 (defun kill-instance (name)
   (let ((inst (find-running name)))

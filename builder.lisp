@@ -1,4 +1,4 @@
-(defvar *platform* "linux-x64")
+(defparameter *platform* "freebsd-x64")
 (defvar *builds* nil)
 (defvar *instances* nil)
 

@@ -50,6 +50,12 @@
                                  (concatenate 'string build "/" rev "/")
                                  (concatenate 'string build "/"))) #P"build/") )
 
+(defmacro with-cwd (dir &body body)
+  "Like UIOP:WITH-CURRENT-DIRECTORY, but returns the value of evaluating BODY."
+  (let ((rval-name (gensym)))
+    `(let ((,rval-name))
+       (uiop:call-with-current-directory ,dir (setf ,rval-name (lambda () ,@body))))))
+
 (defun update-build (build)
   (destructuring-bind (name m url hash) (find-build build)
     (unless (equal :GIT m)
@@ -85,12 +91,6 @@
   (declare (ignore hash))
   (with-status-as (format nil "Cloning ~a" dest)
     (uiop:run-program (nice (list "git" "clone" "--depth=1" url (namestring dest))))))
-
-(defmacro with-cwd (dir &body body)
-  "Like UIOP:WITH-CURRENT-DIRECTORY, but returns the value of evaluating BODY."
-  (let ((rval-name (gensym)))
-    `(let ((,rval-name))
-       (uiop:call-with-current-directory ,dir (setf ,rval-name (lambda () ,@body))))))
 
 (defun update (hash dest)
   (declare (ignore hash))

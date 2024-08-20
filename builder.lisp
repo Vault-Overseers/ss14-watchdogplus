@@ -199,7 +199,9 @@
                                                  "--cvar" (cvardef "watchdog.key" name)
                                                  "--cvar" (cvardef "watchdog.token" name))
                                            :output (log-path name)
-                                           :error-output (log-path name))))
+                                           :if-output-exists :append
+                                           :error-output (log-path name)
+                                           :if-error-output-exists :append)))
         (push (cons name procinfo) *running-instances*)))))
 
 ;(read-config "config.lisp")

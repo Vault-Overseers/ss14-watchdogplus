@@ -20,11 +20,13 @@
 (define-condition instance-already-defined (error)
   ((text :initarg :text :reader text)))
 
-(defun definstance (name &key build data)
+(defun definstance (name &key build data port)
   (when (assoc name *instances* :test #'string-equal)
     (error 'instance-already-defined :text "The instance ~a was already defined."))
   (find-build build)
-  (push (cons name (list :build build :data (if data data name))) *instances*))
+  (unless port
+    (error "Instance ~a needs to specify a :PORT" name))
+  (push (cons name (list :build build :data (if data data name) :port port)) *instances*))
 
 (defun read-config (path)
   (clear-builds)

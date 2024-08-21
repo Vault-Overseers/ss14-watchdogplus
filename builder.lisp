@@ -281,7 +281,6 @@
             (format t "===> Resuming watchdog...~%")))))
 
 (defun start ()
-  (reload)
   (format t "===>>> Starting builds for ~a...~%" (list-builds))
   (dolist (b (list-builds))
     (update-build b))
@@ -297,5 +296,6 @@
   (exit))
 
 (defun main ()
+  (reload)
   (start)
   (watchdog))

@@ -1,4 +1,13 @@
-(defparameter *platform* "linux-x64")
+(defun dotnet-rid ()
+  "Guess the running dotnet RID, for passing as the target for the packaging script."
+  (let ((os (ecase (uiop:operating-system)
+              (:LINUX "linux")
+              (:BSD "freebsd")))
+        (arch (ecase (uiop:architecture)
+                (:X64 "x64"))))
+    (format nil "~a-~a" os arch)))
+
+(defparameter *platform* (dotnet-rid))
 (defvar *builds* nil)
 (defvar *instances* nil)
 (defvar *running-instances* nil)

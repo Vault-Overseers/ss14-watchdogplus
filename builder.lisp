@@ -141,7 +141,9 @@
 (defun do-extract (build rev)
   (with-status-as (format nil "Extracting ~a" build)
     (let ((dest (ensure-directories-exist (build-path build rev))))
-      (uiop:run-program (nice (list "unzip" "-d" (namestring dest) (namestring (release-path build *platform*))))))))
+      (uiop:run-program (nice (list "unzip" "-d" (namestring dest) (namestring (release-path build *platform*)))))
+      (with-cwd dest
+        (uiop:run-program (list "chmod" "+x" "Robust.Server"))))))
 
 (defun data-path (name)
   (pathname (format nil "data/~a/" name)))

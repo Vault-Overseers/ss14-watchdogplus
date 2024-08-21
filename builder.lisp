@@ -258,7 +258,12 @@
 (defun watchdog ()
   (loop do
         (start-instances (check-children))
-        (sleep 10)))
+        (handler-case (sleep 10)
+          (sb-sys:interactive-interrupt ()
+            (format t "===> Welcome to the ss14-watchdog command line!~%")
+            (break)
+            (format t "===> Resuming watchdog...~%")
+            ))))
 
 (defun start ()
   (reload)
@@ -272,7 +277,10 @@
   (dolist (i *running-instances*)
     (kill-instance (car i))))
 
+(defun shutdown ()
+  (stop)
+  (exit))
+
 (defun main ()
-  (reload)
   (start)
   (watchdog))

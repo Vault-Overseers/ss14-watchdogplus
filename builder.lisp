@@ -65,7 +65,7 @@
       (let ((has-new-build nil)
             (latest (update hash repo-path)))
         (if (has-build build latest)
-            (format t "===> Revision ~a already built, skipping build~%" latest)
+            (format t "===> Revision ~a already built~%" latest)
             (progn
               (do-package repo-path *platform*)
               (do-extract build latest)
@@ -239,6 +239,7 @@
     "What do you want to do?"
     (list (list "update" "Update a build" #'run-update)
           (list "reload" "Reload configuration file" #'reload)
+          (list "break" "Drop into a REPL (advanced)" #'cli)
           (list "shutdown" "Shut down everything and exit" #'shutdown))))
 
 (defun watchdog ()
@@ -248,7 +249,7 @@
           (sb-sys:interactive-interrupt ()
             (dialog-menu)
             (dialog-clear)
-            (format t "===> Resuming watchdog...~%")))))
+            (format t "===> Watchdog running. Press CTRL-C to enter menu.~%")))))
 
 (defun start ()
   (format t "===>>> Starting builds for ~a...~%" (list-builds))

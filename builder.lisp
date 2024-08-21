@@ -84,8 +84,10 @@
 (defmacro with-status-as (message &body body)
   `(progn
      (format t "===> ~a... " ,message)
+     (force-output)
      (let ((ret (progn ,@body)))
        (format t "~a~%" (if ret ret "done"))
+       (force-output)
        ret)))
 
 (defun clone (url hash dest)

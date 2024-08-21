@@ -1,7 +1,4 @@
-(defun get-platform ()
-  (uiop:run-program "dotnet --info | grep RID | cut -w -f 3" :output '(:string :stripped t)))
-
-(defvar *platform* (get-platform))
+(defparameter *platform* "linux-x64")
 (defvar *builds* nil)
 (defvar *instances* nil)
 (defvar *running-instances* nil)

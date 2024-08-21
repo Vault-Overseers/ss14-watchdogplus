@@ -52,6 +52,6 @@ At this prompt, you can execute:
    The watchdog will automatically re-build this build, then notify any running instances to gracefully reboot at round end.
 - `(shutdown)` - Stop all running instances and exit the watchdog
 
-[!IMPORTANT]
-You must exit the watchdog interactive command-line for the watchdog to resume its normal watchdog duties (restarting servers).
-To exit the interactive command-line, type `0` at the prompt.
+> [!IMPORTANT]
+> You must exit the watchdog interactive command-line for the watchdog to resume its normal watchdog duties (restarting servers).
+> To exit the interactive command-line, type `0` at the prompt.

@@ -252,15 +252,31 @@
   (prestart-all)
   (format t "===>>> Loaded configuration ~a~%" (list-instances)))
 
+(defun cli ()
+  (format t "===> Welcome to the ss14-watchdog command line!~%")
+  (break))
+
+(defun select-build (prompt)
+  (checklist prompt (list-builds)))
+
+(defun run-update ()
+  (dolist (l (select-build "Which build(s) should be updated?"))
+    (notify-update l)))
+
+(defun dialog-menu ()
+  (menu-dispatch
+    "What do you want to do?"
+    (list (list "update" "Update a build" #'run-update)
+          (list "reload" "Reload configuration file" #'reload)
+          (list "shutdown" "Shut down everything and exit" #'shutdown))))
+
 (defun watchdog ()
   (loop do
         (start-instances (check-children))
         (handler-case (sleep 10)
           (sb-sys:interactive-interrupt ()
-            (format t "===> Welcome to the ss14-watchdog command line!~%")
-            (break)
-            (format t "===> Resuming watchdog...~%")
-            ))))
+            (dialog-menu)
+            (format t "===> Resuming watchdog...~%")))))
 
 (defun start ()
   (reload)

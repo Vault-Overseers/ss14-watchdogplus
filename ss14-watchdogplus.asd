@@ -3,5 +3,6 @@
   :build-operation program-op
   :build-pathname "ss14-watchdogplus"
   :entry-point "cl-user::main"
-  :components ((:file "dialog")
+  :components ((:file "fsutil")
+               (:file "dialog")
                (:file "builder")))

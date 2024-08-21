@@ -22,3 +22,8 @@
                     (mapcan (lambda (op) (list (first op) (second op))) options)))
     (if (zerop ret)
         (funcall (third (find-if (lambda (x) (string-equal tag (first x))) options))))))
+
+(defun dialog-clear ()
+  (uiop:run-program "clear"
+		    :output :interactive
+		    :input :interactive))

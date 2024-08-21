@@ -278,6 +278,7 @@
         (handler-case (sleep 10)
           (sb-sys:interactive-interrupt ()
             (dialog-menu)
+            (dialog-clear)
             (format t "===> Resuming watchdog...~%")))))
 
 (defun start ()

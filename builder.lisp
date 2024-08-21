@@ -59,6 +59,7 @@
        (uiop:call-with-current-directory ,dir (setf ,rval-name (lambda () ,@body))))))
 
 (defun update-build (build)
+  "Update the given build. Returns T if a new build was made, NIL if it failed or no build needed."
   (destructuring-bind (name m url hash) (find-build build)
     (unless (equal :GIT m)
       (error 'program-error "Update type not supported"))
@@ -66,15 +67,18 @@
         (ensure-directories-exist (build-repo-path name))
       (when created
         (clone url hash repo-path))
-      (let ((latest (update hash repo-path)))
+      (let ((has-new-build nil)
+            (latest (update hash repo-path)))
         (if (has-build build latest)
             (format t "===> Revision ~a already built, skipping build~%" latest)
             (progn
               (do-package repo-path *platform*)
-              (do-extract build latest)))
+              (do-extract build latest)
+              (setf has-new-build T)))
         ; symlink to latest build
         (with-cwd (build-path build)
-          (uiop:run-program (list "ln" "-shf" (concatenate 'string latest "/") "latest")))))))
+          (uiop:run-program (list "ln" "-shf" (concatenate 'string latest "/") "latest")))
+        has-new-build))))
 
 (defun has-build (build rev)
   (probe-file (build-path build rev)))
@@ -187,6 +191,7 @@
   (format nil "~a=~a" name val))
 
 (defun start-instance (name)
+  (format t "===> Starting instance ~a...~%" name)
   (let* ((inst (cdr (find-instance name)))
          (exe (concatenate 'string (namestring (build-path (getf inst :build))) "latest/Robust.Server")))
     (print exe)
@@ -203,24 +208,71 @@
                                            :if-error-output-exists :append)))
         (push (cons name procinfo) *running-instances*)))))
 
-;(read-config "config.lisp")
+(defun instances-needing-build (build)
+  "Return a list of instance ID's that depend on the given build."
+  (mapcar #'first (remove-if-not (lambda (i) (string-equal build (getf (cdr i) :build))) *instances*)))
 
-;(update-build "ds14")
-
-;(prestart-all)
-
-;(start-instance "ds14-prod")
-
-;(kill-instance "ds14-prod")
+(defun notify-update (build)
+  (when (update-build build)
+    (dolist (i (remove-if-not #'running (instances-needing-build build)))
+      (signal-update-instance i))))
 
 (defun signal-update-instance (name)
-  (let* ((inst (find-instance name))
-         (port (getf (cdr inst) :port)))
-    (when port
-      (dex:post (format nil "http://localhost:~a/update" port)
-                :headers (list (cons "WatchdogToken" name))))))
+  (with-status-as (format nil "Notifying ~a of an update" name)
+    (let* ((inst (find-instance name))
+           (port (getf (cdr inst) :port)))
+      (when port
+        (dex:post (format nil "http://localhost:~a/update" port)
+                  :headers (list (cons "WatchdogToken" name))
+                  :connect-timeout 1)))))
 
 (defun kill-instance (name)
   (let ((inst (find-running name)))
-    (uiop:terminate-process (cdr inst))
-    (setf *running-instances* (delete inst *running-instances*))))
+    (setf *running-instances* (delete inst *running-instances*))  
+    (uiop:terminate-process (cdr inst))))
+
+(defun check-children ()
+  "Return a list of servers that are supposed to be running but are not."
+  (let ((reaplist nil))
+    (dolist (el *running-instances*)
+      (unless (uiop:process-alive-p (cdr el))
+        (format t "===>>> Instance ~a died~%" (car el))
+        (push (car el) reaplist)))
+    reaplist))
+
+(defun list-builds ()
+  (mapcar #'first *builds*))
+
+(defun list-instances ()
+  (mapcar #'first *instances*))
+
+(defun start-instances (is)
+  (dolist (i is)
+    (start-instance i)))
+
+(defun reload ()
+  (read-config "config.lisp")
+  (prestart-all)
+  (format t "===>>> Loaded configuration ~a~%" (list-instances)))
+
+(defun watchdog ()
+  (loop do
+        (start-instances (check-children))
+        (sleep 10)))
+
+(defun start ()
+  (reload)
+  (format t "===>>> Starting builds for ~a...~%" (list-builds))
+  (dolist (b (list-builds))
+    (update-build b))
+  (format t "===>>> Starting instances ~a...~%" (list-instances))
+  (start-instances (list-instances)))
+
+(defun stop ()
+  (dolist (i *running-instances*)
+    (kill-instance (car i))))
+
+(defun main ()
+  (reload)
+  (start)
+  (watchdog))

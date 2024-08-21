@@ -246,7 +246,9 @@
   (loop do
         (start-instances (check-children))
         (handler-case (sleep 10)
-          (sb-sys:interactive-interrupt ()
+          (#+sbcl sb-sys:interactive-interrupt
+           #+ecl ext:interactive-interrupt
+            ()
             (dialog-menu)
             (dialog-clear)
             (format t "===> Watchdog running. Press CTRL-C to enter menu.~%")))))
@@ -264,7 +266,8 @@
 
 (defun shutdown ()
   (stop)
-  (exit))
+  (#+sbcl sb-ext:exit
+   #+ecl sys:exit))
 
 (defun main ()
   (reload)

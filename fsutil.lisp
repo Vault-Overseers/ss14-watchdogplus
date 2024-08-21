@@ -10,7 +10,10 @@
     (close (open path :if-does-not-exist :create))))
 
 (defun symlink (target link)
-  (uiop:run-program (list "ln" "-shf" target link)) )
+  (uiop:run-program (list "ln" (ecase (uiop:operating-system)
+                                 (:BSD "-shf")
+                                 (:LINUX "-snf"))
+                          target link)))
 
 (defun rmrf (path)
   (uiop:run-program (list "rm" "-rf" (namestring path))))

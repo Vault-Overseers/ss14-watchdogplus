@@ -195,7 +195,7 @@
          (exe (concatenate 'string (namestring (build-path (getf inst :build))) "latest/Robust.Server")))
     (print exe)
     (unless (running name)
-      (ensure-directories-exist (log-path name))
+      (ensure-file-exist (log-path name))
       (let ((procinfo (uiop:launch-program (list exe
                                                  "--config-file" (namestring (config-path name))
                                                  "--data-dir" (namestring (data-path (getf inst :data)))

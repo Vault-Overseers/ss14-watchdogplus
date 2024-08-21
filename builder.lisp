@@ -1,5 +1,3 @@
-(ql:quickload "dexador")
-
 (defun get-platform ()
   (uiop:run-program "dotnet --info | grep RID | cut -w -f 3" :output '(:string :stripped t)))
 

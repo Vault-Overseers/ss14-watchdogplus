@@ -1,6 +1,9 @@
 (ql:quickload "dexador")
 
-(defparameter *platform* "freebsd-x64")
+(defun get-platform ()
+  (uiop:run-program "dotnet --info | grep RID | cut -w -f 3" :output '(:string :stripped t)))
+
+(defvar *platform* (get-platform))
 (defvar *builds* nil)
 (defvar *instances* nil)
 (defvar *running-instances* nil)

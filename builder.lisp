@@ -36,14 +36,11 @@
   (clear-instances)
   (load path))
 
-(define-condition build-not-found (error)
-  ((text :initarg :text :reader text)))
-
 (defun find-build (build)
   (let ((ret (assoc build *builds* :test #'string-equal)))
     (if ret
         ret
-        (error 'build-not-found :text "No build with the name ~a was found."))))
+        (error "No build with the name ~a was found." build))))
 
 (defun build-repo-path (build)
   (merge-pathnames (pathname (concatenate 'string build "/")) #P"git/"))

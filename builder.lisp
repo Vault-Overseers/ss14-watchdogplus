@@ -173,17 +173,12 @@
          (wd-url (format nil "http://localhost:~a" +watchdog-port+)))
     (print exe)
     (unless (running name)
-      (ensure-file-exist (log-path name))
       (let ((procinfo (uiop:launch-program (list exe
                                                  "--config-file" (namestring (config-path name))
                                                  "--data-dir" (namestring (data-path (getf inst :data)))
                                                  "--cvar" (cvardef "watchdog.baseUrl" wd-url)
                                                  "--cvar" (cvardef "watchdog.key" name)
-                                                 "--cvar" (cvardef "watchdog.token" name))
-                                           :output (log-path name)
-                                           :if-output-exists :append
-                                           :error-output (log-path name)
-                                           :if-error-output-exists :append)))
+                                                 "--cvar" (cvardef "watchdog.token" name)))))
         (push (cons name procinfo) *running-instances*)))))
 
 (defun instances-needing-build (build)

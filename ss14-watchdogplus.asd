@@ -1,5 +1,5 @@
 (defsystem "ss14-watchdogplus"
-  :depends-on ("dexador" "str" "uiop")
+  :depends-on ("bt-semaphore" "dexador" "str" "uiop" "woo")
   :build-operation program-op
   :build-pathname "ss14-watchdogplus"
   :entry-point "cl-user::main"

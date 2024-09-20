@@ -8,6 +8,7 @@
     (format nil "~a-~a" os arch)))
 
 (defparameter *platform* (dotnet-rid))
+(defparameter +watchdog-port+ 5005)
 (defvar *builds* nil)
 (defvar *instances* nil)
 (defvar *running-instances* nil)
@@ -161,13 +162,15 @@
 (defun start-instance (name)
   (format t "===> Starting instance ~a...~%" name)
   (let* ((inst (cdr (find-instance name)))
-         (exe (concatenate 'string (namestring (build-path (getf inst :build))) "latest/Robust.Server")))
+         (exe (concatenate 'string (namestring (build-path (getf inst :build))) "latest/Robust.Server"))
+         (wd-url (format nil "http://localhost:~a" +watchdog-port+)))
     (print exe)
     (unless (running name)
       (ensure-file-exist (log-path name))
       (let ((procinfo (uiop:launch-program (list exe
                                                  "--config-file" (namestring (config-path name))
                                                  "--data-dir" (namestring (data-path (getf inst :data)))
+                                                 "--cvar" (cvardef "watchdog.baseUrl" wd-url)
                                                  "--cvar" (cvardef "watchdog.key" name)
                                                  "--cvar" (cvardef "watchdog.token" name))
                                            :output (log-path name)
@@ -253,11 +256,21 @@
             (dialog-clear)
             (format t "===> Watchdog running. Press CTRL-C to enter menu.~%")))))
 
+(defun start-http-host ()
+  "Start dummy HTTP host to silence warnings from SS14 server watchdog."
+  (bt:make-thread
+    (lambda ()
+      (woo:run (lambda (env)
+                 (declare (ignore env))
+                 '(200 (:content-type "text/plain") ("Success!")))
+               :port +watchdog-port+))))
+
 (defun start ()
   (format t "===>>> Starting builds for ~a...~%" (list-builds))
   (dolist (b (list-builds))
     (update-build b))
   (format t "===>>> Starting instances ~a...~%" (list-instances))
+  (start-http-host)
   (start-instances (list-instances)))
 
 (defun stop ()

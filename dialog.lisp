@@ -14,6 +14,9 @@
       (run-dialog (concatenate 'list (list "--no-items" "--checklist" prompt "0" "0" "0") (checkbox-enum l)))
     (str:words tag)))
 
+(defun msg (msg)
+  (run-dialog (concatenate 'list (list "--msgbox" msg "0" "0"))))
+
 (defun menu-dispatch (title options)
   (multiple-value-bind (out tag ret)
       (run-dialog (concatenate

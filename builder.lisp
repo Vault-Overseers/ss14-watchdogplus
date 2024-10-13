@@ -9,10 +9,13 @@
 
 (defparameter *platform* (dotnet-rid))
 (defparameter +watchdog-port+ 5005)
+
+;;; Global State
 (defvar *builds* nil)
 (defvar *instances* nil)
 (defvar *running-instances* nil)
 
+;; Configuration
 (defun clear-builds ()
   (setf *builds* nil))
 
@@ -37,6 +40,7 @@
   (clear-instances)
   (load path))
 
+;; Builds
 (defun find-build (build)
   (let ((ret (assoc build *builds* :test #'string-equal)))
     (if ret
@@ -156,6 +160,9 @@
         (progn (setf *running-instances* (delete inst *running-instances*))
                nil))))
 
+(defun list-running ()
+  (mapcar #'car *running-instances*))
+
 (defun cvardef (name val)
   (format nil "~a=~a" name val))
 
@@ -233,6 +240,12 @@
 (defun select-build (prompt)
   (checklist prompt (list-builds)))
 
+(defun select-instance (prompt)
+  (checklist prompt (list-instances)))
+
+(defun menu-start ()
+  (start-instances (select-instance "Which instance(s) should be started?")))
+
 (defun run-update ()
   (dolist (l (select-build "Which build(s) should be updated?"))
     (notify-update l)))
@@ -240,10 +253,16 @@
 (defun dialog-menu ()
   (menu-dispatch
     "What do you want to do?"
-    (list (list "update" "Update a build" #'run-update)
-          (list "reload" "Reload configuration file" #'reload)
+    (list (list "status" "Show current server status" #'status)
+          (list "start" "Start servers that are not running" #'menu-start)
+          (list "update" "Update server builds" #'run-update)
+          (list "reload" "Re-read watchdog configuration" #'reload)
+          (list "wdupdate" "Update watchdog" #'wdupdate)
           (list "break" "Drop into a REPL (advanced)" #'cli)
           (list "shutdown" "Shut down everything and exit" #'shutdown))))
+
+(defun status ()
+  (msg (format nil "Configured servers:\\n~a\\n\\nRunning servers:\\n~a" (list-instances) (list-running))))
 
 (defun watchdog ()
   (loop do
@@ -256,6 +275,9 @@
             (dialog-clear)
             (format t "===> Watchdog running. Press CTRL-C to enter menu.~%")))))
 
+(defun wdupdate ()
+  (asdf:load-system "ss14-watchdogplus"))
+
 (defun start-http-host ()
   "Start dummy HTTP host to silence warnings from SS14 server watchdog."
   (bt:make-thread
@@ -265,12 +287,11 @@
                  '(200 (:content-type "text/plain") ("Success!")))
                :port +watchdog-port+))))
 
-(defun start ()
+(defun autostart ()
   (format t "===>>> Starting builds for ~a...~%" (list-builds))
   (dolist (b (list-builds))
     (update-build b))
   (format t "===>>> Starting instances ~a...~%" (list-instances))
-  (start-http-host)
   (start-instances (list-instances)))
 
 (defun stop ()
@@ -284,5 +305,6 @@
 
 (defun main ()
   (reload)
-  (start)
+ ;(start-http-host) broken due to interrupt
+  (dialog-menu) ; offer to start servers
   (watchdog))

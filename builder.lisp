@@ -135,7 +135,7 @@
   (let ((ret (assoc build *instances* :test #'string-equal)))
     (if ret
         ret
-        (error 'instance-not-found :text "No instance with the name ~a was found."))))
+        (error "No instance with the name '~a' was found." build))))
 
 (defun prestart-instance (inst)
   (find-instance inst)

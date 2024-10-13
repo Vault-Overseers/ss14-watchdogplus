@@ -3,7 +3,7 @@
 **ss14-watchdogplus** is a multi-codebase, multi-server server manager for [Space Station 14](https://spacestation14.com/) servers and forks.
 It is designed primarily for server operators who operate multiple SS14 servers from different codebases on one big box.
 
-Compared to [SS14.Watchdog](https://github.com/space-wizards/SS14.Watchdog), **ss14-watchdogplus** can:
+**ss14-watchdogplus** can:
 
 - Pre-build server binaries from Git to reduce startup time, like [Robust.Cdn](https://github.com/space-wizards/Robust.Cdn) but without the extra setup
 - Reboot instances independently, even if they are on the same build
@@ -11,14 +11,19 @@ Compared to [SS14.Watchdog](https://github.com/space-wizards/SS14.Watchdog), **s
 
 ## Building
 
-1. Clone this repository to a location that ASDF can find, e.g. *~/common-lisp/*
-2. Load the system, e.g.:
+1. Install dependencies:
+    - The [dialog](https://invisible-island.net/dialog/) command-line tool is needed for the TUI menu
+    - We recommend using [Quicklisp](https://www.quicklisp.org/beta/) for Lisp dependencies
+
+2. Clone this repository to a [location that ASDF can find](https://asdf.common-lisp.dev/asdf.html#Controlling-where-ASDF-searches-for-systems), e.g. *~/common-lisp/*
+
+3. Load the system, e.g.:
 
     ````
     (ql:quickload "ss14-watchdogplus")
     ````
 
-3. Build the binary:
+4. Build the binary:
 
     ````
     (asdf:make "ss14-watchdogplus")
@@ -35,23 +40,20 @@ There are two terms you need to understand for the configuration to make sense:
 ## Usage
 
 ### Startup
-Inside the watchdog directory:
+1. Inside the watchdog directory:
 
-````
-$ ./ss14-watchdogplus
-````
+    ````
+    $ ./ss14-watchdogplus
+    ````
 
-The watchdog should tell you the builds and instances that are configured, then start building the builds.
-After the builds are complete, it will launch all the configured instances.
+    The interactive menu will appear.
 
-### Interactive Command-Line
-While the watchdog is running, press CTRL-C to enter the interactive watchdog prompt.
-At this prompt, you can execute:
+2. Before your first run, you should `update` all of the builds.
 
-- `(notify-update "BUILD")` - Notify the watchdog that the build identified by *BUILD* was updated.
-   The watchdog will automatically re-build this build, then notify any running instances to gracefully reboot at round end.
-- `(shutdown)` - Stop all running instances and exit the watchdog
+3. Then, `start` the instances that you want the watchdog to monitor.
+
+### Interactive Menu
+While the watchdog is running, press CTRL-C to enter the interactive menu.
 
 > [!IMPORTANT]
-> You must exit the watchdog interactive command-line for the watchdog to resume its normal watchdog duties (restarting servers).
-> To exit the interactive command-line, type `0` at the prompt.
+> You must exit the interactive menu for the watchdog to resume its normal watchdog duties (restarting servers).

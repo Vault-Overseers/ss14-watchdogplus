@@ -9,15 +9,39 @@ It is designed primarily for server operators who operate multiple SS14 servers 
 - Reboot instances independently, even if they are on the same build
 - Gracefully notify servers to reboot or shut down at the end of a round
 
-## Building
+## Installation
 
 1. Install dependencies:
-    - The [dialog](https://invisible-island.net/dialog/) command-line tool is needed for the TUI menu
-    - We recommend using [Quicklisp](https://www.quicklisp.org/beta/) for Lisp dependencies
+   - The [dialog](https://invisible-island.net/dialog/) command-line tool for the TUI menu. On Ubuntu:
+
+     ````
+     apt install dialog
+     ````
+
+   - libev. On Ubuntu:
+
+     ````
+     apt install libev4t64
+     ````
+
+2. Follow the instructions below to build the watchdog from source. Skip if you have a pre-built binary.
+
+### Building
+
+1. Install build dependencies:
+   - [Steel Bank Common Lisp (SBCL)](https://www.sbcl.org/)
+
+     On Ubuntu:
+
+     ````
+     apt install sbcl
+     ````
+
+   - We recommend using [Quicklisp](https://www.quicklisp.org/beta/) for Lisp dependencies. Follow the **Installation** instructions.
 
 2. Clone this repository to a [location that ASDF can find](https://asdf.common-lisp.dev/asdf.html#Controlling-where-ASDF-searches-for-systems), e.g. *~/common-lisp/*
 
-3. Load the system, e.g.:
+3. Load the system and its dependencies:
 
     ````
     (ql:quickload "ss14-watchdogplus")

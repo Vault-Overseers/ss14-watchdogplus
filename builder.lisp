@@ -299,7 +299,10 @@
    #+ecl sys:exit))
 
 (defun main ()
-  (reload)
+  (handler-case (reload)
+    (error (e) (progn
+                 (format t "Failed to read configuration file, aborting. The problem was:~% > ~a" e)
+                 (exit))))
  ;(start-http-host) broken due to interrupt
   (dialog-menu) ; offer to start servers
   (watchdog))

@@ -10,6 +10,8 @@
         (list item (write-to-string 0))))
 
 (defun checklist (prompt l)
+  (unless l
+    (return-from checklist))
   (multiple-value-bind (out tag ret)
       (run-dialog (concatenate 'list (list "--no-items" "--checklist" prompt "0" "0" "0") (checkbox-enum l)))
     (str:words tag)))

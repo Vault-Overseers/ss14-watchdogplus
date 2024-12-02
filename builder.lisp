@@ -235,11 +235,19 @@
 (defun select-build (prompt)
   (checklist prompt (list-builds)))
 
-(defun select-instance (prompt)
-  (checklist prompt (list-instances)))
+(defun select-instance (prompt &key running)
+  (checklist prompt (if running
+                        (list-running)
+                        (list-instances))))
 
 (defun menu-start ()
   (start-instances (select-instance "Which instance(s) should be started?")))
+
+(defun menu-stop ()
+  (let ((tokill (select-instance "Which instance(s) should be forcibly stopped?" :running T)))
+    (if tokill
+        (dolist (i tokill) (kill-instance i))
+        (msg "No servers are running."))))
 
 (defun run-update ()
   (dolist (l (select-build "Which build(s) should be updated?"))
@@ -250,6 +258,7 @@
     "What do you want to do?"
     (list (list "status" "Show current server status" #'status)
           (list "start" "Start servers that are not running" #'menu-start)
+          (list "stop" "Forcibly stop servers" #'menu-stop)
           (list "update" "Update server builds" #'run-update)
           (list "reload" "Re-read watchdog configuration" #'reload)
           (list "wdupdate" "Update watchdog" #'wdupdate)
